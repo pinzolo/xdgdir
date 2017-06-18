@@ -1,7 +1,9 @@
 package xdgdir
 
 import (
+	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -248,4 +250,92 @@ func TestAppRuntimeFile(t *testing.T) {
 	if dir := app.RuntimeFile(name); dir != "/x/test/runtime.pid" {
 		t.Errorf("expected /x/test, but got %s", dir)
 	}
+}
+
+func TestAppFindConfigFile(t *testing.T) {
+	app := NewApp("test")
+	os.Setenv("XDG_CONFIG_HOME", "testdata/x")
+	os.Setenv("XDG_CONFIG_DIRS", "testdata/y:testdata/z")
+	table := []struct {
+		name    string
+		content string
+		err     bool
+	}{
+		{"aaa.txt", "testdata/a/test/aaa.txt", true},
+		{"xxx.txt", "testdata/x/test/xxx.txt", false},
+		{"yyy.txt", "testdata/y/test/yyy.txt", false},
+		{"zzz.txt", "testdata/z/test/zzz.txt", false},
+	}
+	for _, test := range table {
+		f, err := app.FindConfigFile(test.name)
+		if test.err {
+			if err == nil {
+				t.Error("should raise error, but not raised")
+			}
+			continue
+		}
+
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		s, err := openFile(f)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if s != test.content {
+			t.Error("find invalid file")
+		}
+	}
+}
+
+func TestAppFindDataFile(t *testing.T) {
+	app := NewApp("test")
+	os.Setenv("XDG_DATA_HOME", "testdata/x")
+	os.Setenv("XDG_DATA_DIRS", "testdata/y:testdata/z")
+	table := []struct {
+		name    string
+		content string
+		err     bool
+	}{
+		{"aaa.txt", "testdata/a/test/aaa.txt", true},
+		{"xxx.txt", "testdata/x/test/xxx.txt", false},
+		{"yyy.txt", "testdata/y/test/yyy.txt", false},
+		{"zzz.txt", "testdata/z/test/zzz.txt", false},
+	}
+	for _, test := range table {
+		f, err := app.FindDataFile(test.name)
+		if test.err {
+			if err == nil {
+				t.Error("should raise error, but not raised")
+			}
+			continue
+		}
+
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		s, err := openFile(f)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		if s != test.content {
+			t.Error("find invalid file")
+		}
+	}
+}
+
+func openFile(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	p, err := ioutil.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(p)), nil
 }

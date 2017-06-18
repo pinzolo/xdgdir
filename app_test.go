@@ -23,9 +23,9 @@ func TestAppConfigDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x/test", false},
-		{"", "/y", "/z", "/y/.config/test", false},
-		{"", "", "/z", "/z/.config/test", false},
+		{"x", "y", "z", path("x", "test"), false},
+		{"", "y", "z", path("y", ".config", "test"), false},
+		{"", "", "z", path("z", ".config", "test"), false},
 		{"", "", "", "", true},
 	}
 
@@ -58,9 +58,9 @@ func TestAppDataDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x/test", false},
-		{"", "/y", "/z", "/y/.local/share/test", false},
-		{"", "", "/z", "/z/.local/share/test", false},
+		{"x", "y", "z", path("x", "test"), false},
+		{"", "y", "z", path("y", ".local", "share", "test"), false},
+		{"", "", "z", path("z", ".local", "share", "test"), false},
 		{"", "", "", "", true},
 	}
 
@@ -93,9 +93,9 @@ func TestAppCacheDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x/test", false},
-		{"", "/y", "/z", "/y/.cache/test", false},
-		{"", "", "/z", "/z/.cache/test", false},
+		{"x", "y", "z", path("x", "test"), false},
+		{"", "y", "z", path("y", ".cache", "test"), false},
+		{"", "", "z", path("z", ".cache", "test"), false},
 		{"", "", "", "", true},
 	}
 
@@ -141,9 +141,9 @@ func TestAppConfigFile(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x/test/config.json", false},
-		{"", "/y", "/z", "/y/.config/test/config.json", false},
-		{"", "", "/z", "/z/.config/test/config.json", false},
+		{"x", "y", "z", path("x", "test", "config.json"), false},
+		{"", "y", "z", path("y", ".config", "test", "config.json"), false},
+		{"", "", "z", path("z", ".config", "test", "config.json"), false},
 		{"", "", "", "", true},
 	}
 
@@ -177,9 +177,9 @@ func TestAppDataFile(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x/test/data.json", false},
-		{"", "/y", "/z", "/y/.local/share/test/data.json", false},
-		{"", "", "/z", "/z/.local/share/test/data.json", false},
+		{"x", "y", "z", path("x", "test", "data.json"), false},
+		{"", "y", "z", path("y", ".local", "share", "test", "data.json"), false},
+		{"", "", "z", path("z", ".local", "share", "test", "data.json"), false},
 		{"", "", "", "", true},
 	}
 
@@ -213,9 +213,9 @@ func TestAppCacheFile(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x/test/cache.json", false},
-		{"", "/y", "/z", "/y/.cache/test/cache.json", false},
-		{"", "", "/z", "/z/.cache/test/cache.json", false},
+		{"x", "y", "z", path("x", "test", "cache.json"), false},
+		{"", "y", "z", path("y", ".cache", "test", "cache.json"), false},
+		{"", "", "z", path("z", ".cache", "test", "cache.json"), false},
 		{"", "", "", "", true},
 	}
 
@@ -246,25 +246,25 @@ func TestAppRuntimeFile(t *testing.T) {
 		t.Error("runtime dir should be not empty")
 	}
 
-	os.Setenv("XDG_RUNTIME_DIR", "/x")
-	if dir := app.RuntimeFile(name); dir != "/x/test/runtime.pid" {
+	os.Setenv("XDG_RUNTIME_DIR", "x")
+	if dir := app.RuntimeFile(name); dir != path("x", "test", "runtime.pid") {
 		t.Errorf("expected /x/test, but got %s", dir)
 	}
 }
 
 func TestAppFindConfigFile(t *testing.T) {
 	app := NewApp("test")
-	os.Setenv("XDG_CONFIG_HOME", "testdata/x")
-	os.Setenv("XDG_CONFIG_DIRS", "testdata/y:testdata/z")
+	os.Setenv("XDG_CONFIG_HOME", path("testdata", "x"))
+	os.Setenv("XDG_CONFIG_DIRS", join(path("testdata", "y"), path("testdata", "z")))
 	table := []struct {
 		name    string
 		content string
 		err     bool
 	}{
-		{"aaa.txt", "testdata/a/test/aaa.txt", true},
-		{"xxx.txt", "testdata/x/test/xxx.txt", false},
-		{"yyy.txt", "testdata/y/test/yyy.txt", false},
-		{"zzz.txt", "testdata/z/test/zzz.txt", false},
+		{"aaa.txt", path("testdata", "a", "test", "aaa.txt"), true},
+		{"xxx.txt", path("testdata", "x", "test", "xxx.txt"), false},
+		{"yyy.txt", path("testdata", "y", "test", "yyy.txt"), false},
+		{"zzz.txt", path("testdata", "z", "test", "zzz.txt"), false},
 	}
 	for _, test := range table {
 		f, err := app.FindConfigFile(test.name)
@@ -292,17 +292,17 @@ func TestAppFindConfigFile(t *testing.T) {
 
 func TestAppFindDataFile(t *testing.T) {
 	app := NewApp("test")
-	os.Setenv("XDG_DATA_HOME", "testdata/x")
-	os.Setenv("XDG_DATA_DIRS", "testdata/y:testdata/z")
+	os.Setenv("XDG_DATA_HOME", path("testdata", "x"))
+	os.Setenv("XDG_DATA_DIRS", join(path("testdata", "y"), path("testdata", "z")))
 	table := []struct {
 		name    string
 		content string
 		err     bool
 	}{
-		{"aaa.txt", "testdata/a/test/aaa.txt", true},
-		{"xxx.txt", "testdata/x/test/xxx.txt", false},
-		{"yyy.txt", "testdata/y/test/yyy.txt", false},
-		{"zzz.txt", "testdata/z/test/zzz.txt", false},
+		{"aaa.txt", path("testdata", "a", "test", "aaa.txt"), true},
+		{"xxx.txt", path("testdata", "x", "test", "xxx.txt"), false},
+		{"yyy.txt", path("testdata", "y", "test", "yyy.txt"), false},
+		{"zzz.txt", path("testdata", "z", "test", "zzz.txt"), false},
 	}
 	for _, test := range table {
 		f, err := app.FindDataFile(test.name)
@@ -338,4 +338,8 @@ func openFile(path string) (string, error) {
 		return "", err
 	}
 	return strings.TrimSpace(string(p)), nil
+}
+
+func join(elm ...string) string {
+	return strings.Join(elm, string(os.PathListSeparator))
 }

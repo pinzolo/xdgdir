@@ -2,6 +2,7 @@ package xdgdir
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -13,9 +14,9 @@ func TestConfigDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x", false},
-		{"", "/y", "/z", "/y/.config", false},
-		{"", "", "/z", "/z/.config", false},
+		{"x", "y", "z", "x", false},
+		{"", "y", "z", path("y", ".config"), false},
+		{"", "", "z", path("z", ".config"), false},
 		{"", "", "", "", true},
 	}
 
@@ -47,9 +48,9 @@ func TestDataDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x", false},
-		{"", "/y", "/z", "/y/.local/share", false},
-		{"", "", "/z", "/z/.local/share", false},
+		{"x", "y", "z", "x", false},
+		{"", "y", "z", path("y", ".local", "share"), false},
+		{"", "", "z", path("z", ".local", "share"), false},
 		{"", "", "", "", true},
 	}
 
@@ -81,9 +82,9 @@ func TestCacheDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"/x", "/y", "/z", "/x", false},
-		{"", "/y", "/z", "/y/.cache", false},
-		{"", "", "/z", "/z/.cache", false},
+		{"x", "y", "z", "x", false},
+		{"", "y", "z", path("y", ".cache"), false},
+		{"", "", "z", path("z", ".cache"), false},
 		{"", "", "", "", true},
 	}
 
@@ -112,8 +113,12 @@ func TestRuntimeDir(t *testing.T) {
 		t.Error("runtime dir should be not empty")
 	}
 
-	os.Setenv("XDG_RUNTIME_DIR", "/x")
-	if dir := RuntimeDir(); dir != "/x" {
-		t.Errorf("expected /x, but got %s", dir)
+	os.Setenv("XDG_RUNTIME_DIR", "x")
+	if dir := RuntimeDir(); dir != "x" {
+		t.Errorf("expected x, but got %s", dir)
 	}
+}
+
+func path(elm ...string) string {
+	return filepath.Join(elm...)
 }

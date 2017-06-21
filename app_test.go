@@ -23,9 +23,9 @@ func TestAppConfigDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"x", "y", "z", path("x", "test"), false},
-		{"", "y", "z", path("y", ".config", "test"), false},
-		{"", "", "z", path("z", ".config", "test"), false},
+		{"a", "b", "c", path("a", "test"), false},
+		{"", "b", "c", path("b", ".config", "test"), false},
+		{"", "", "c", path("c", ".config", "test"), false},
 		{"", "", "", "", true},
 	}
 
@@ -58,9 +58,9 @@ func TestAppDataDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"x", "y", "z", path("x", "test"), false},
-		{"", "y", "z", path("y", ".local", "share", "test"), false},
-		{"", "", "z", path("z", ".local", "share", "test"), false},
+		{"a", "b", "c", path("a", "test"), false},
+		{"", "b", "c", path("b", ".local", "share", "test"), false},
+		{"", "", "c", path("c", ".local", "share", "test"), false},
 		{"", "", "", "", true},
 	}
 
@@ -93,9 +93,9 @@ func TestAppCacheDir(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"x", "y", "z", path("x", "test"), false},
-		{"", "y", "z", path("y", ".cache", "test"), false},
-		{"", "", "z", path("z", ".cache", "test"), false},
+		{"a", "b", "c", path("a", "test"), false},
+		{"", "b", "c", path("b", ".cache", "test"), false},
+		{"", "", "c", path("c", ".cache", "test"), false},
 		{"", "", "", "", true},
 	}
 
@@ -141,9 +141,9 @@ func TestAppConfigFile(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"x", "y", "z", path("x", "test", "config.json"), false},
-		{"", "y", "z", path("y", ".config", "test", "config.json"), false},
-		{"", "", "z", path("z", ".config", "test", "config.json"), false},
+		{"a", "b", "c", path("a", "test", name), false},
+		{"", "b", "c", path("b", ".config", "test", name), false},
+		{"", "", "c", path("c", ".config", "test", name), false},
 		{"", "", "", "", true},
 	}
 
@@ -152,6 +152,43 @@ func TestAppConfigFile(t *testing.T) {
 		os.Setenv("HOME", tbl.home)
 		os.Setenv("USERPROFILE", tbl.userProfile)
 		dir, err := app.ConfigFile(name)
+		if tbl.err {
+			if err == nil {
+				t.Error("should raise error, but not raised")
+			}
+		} else {
+			if err != nil {
+				t.Error(err)
+			}
+			if dir != tbl.expected {
+				t.Errorf("expected %s, but got %s", tbl.expected, dir)
+			}
+		}
+	}
+}
+
+func TestAppConfigFileWithSubdirectory(t *testing.T) {
+	app := NewApp("test")
+	subdir := "sub"
+	name := "config.json"
+	table := []struct {
+		xdgHome     string
+		home        string
+		userProfile string
+		expected    string
+		err         bool
+	}{
+		{"a", "b", "c", path("a", "test", subdir, name), false},
+		{"", "b", "c", path("b", ".config", "test", subdir, name), false},
+		{"", "", "c", path("c", ".config", "test", subdir, name), false},
+		{"", "", "", "", true},
+	}
+
+	for _, tbl := range table {
+		os.Setenv("XDG_CONFIG_HOME", tbl.xdgHome)
+		os.Setenv("HOME", tbl.home)
+		os.Setenv("USERPROFILE", tbl.userProfile)
+		dir, err := app.ConfigFile(subdir, name)
 		if tbl.err {
 			if err == nil {
 				t.Error("should raise error, but not raised")
@@ -177,9 +214,9 @@ func TestAppDataFile(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"x", "y", "z", path("x", "test", "data.json"), false},
-		{"", "y", "z", path("y", ".local", "share", "test", "data.json"), false},
-		{"", "", "z", path("z", ".local", "share", "test", "data.json"), false},
+		{"a", "b", "c", path("a", "test", name), false},
+		{"", "b", "c", path("b", ".local", "share", "test", name), false},
+		{"", "", "c", path("c", ".local", "share", "test", name), false},
 		{"", "", "", "", true},
 	}
 
@@ -188,6 +225,43 @@ func TestAppDataFile(t *testing.T) {
 		os.Setenv("HOME", tbl.home)
 		os.Setenv("USERPROFILE", tbl.userProfile)
 		dir, err := app.DataFile(name)
+		if tbl.err {
+			if err == nil {
+				t.Error("should raise error, but not raised")
+			}
+		} else {
+			if err != nil {
+				t.Error(err)
+			}
+			if dir != tbl.expected {
+				t.Errorf("expected %s, but got %s", tbl.expected, dir)
+			}
+		}
+	}
+}
+
+func TestAppDataFileWithSubdirectory(t *testing.T) {
+	app := NewApp("test")
+	subdir := "sub"
+	name := "data.json"
+	table := []struct {
+		xdgHome     string
+		home        string
+		userProfile string
+		expected    string
+		err         bool
+	}{
+		{"a", "b", "c", path("a", "test", subdir, name), false},
+		{"", "b", "c", path("b", ".local", "share", "test", subdir, name), false},
+		{"", "", "c", path("c", ".local", "share", "test", subdir, name), false},
+		{"", "", "", "", true},
+	}
+
+	for _, tbl := range table {
+		os.Setenv("XDG_DATA_HOME", tbl.xdgHome)
+		os.Setenv("HOME", tbl.home)
+		os.Setenv("USERPROFILE", tbl.userProfile)
+		dir, err := app.DataFile("sub", "data.json")
 		if tbl.err {
 			if err == nil {
 				t.Error("should raise error, but not raised")
@@ -213,9 +287,9 @@ func TestAppCacheFile(t *testing.T) {
 		expected    string
 		err         bool
 	}{
-		{"x", "y", "z", path("x", "test", "cache.json"), false},
-		{"", "y", "z", path("y", ".cache", "test", "cache.json"), false},
-		{"", "", "z", path("z", ".cache", "test", "cache.json"), false},
+		{"a", "b", "c", path("a", "test", name), false},
+		{"", "b", "c", path("b", ".cache", "test", name), false},
+		{"", "", "c", path("c", ".cache", "test", name), false},
 		{"", "", "", "", true},
 	}
 
@@ -239,6 +313,43 @@ func TestAppCacheFile(t *testing.T) {
 	}
 }
 
+func TestAppCacheFileWithSubdirectory(t *testing.T) {
+	app := NewApp("test")
+	subdir := "sub"
+	name := "cache.json"
+	table := []struct {
+		xdgHome     string
+		home        string
+		userProfile string
+		expected    string
+		err         bool
+	}{
+		{"a", "b", "c", path("a", "test", subdir, name), false},
+		{"", "b", "c", path("b", ".cache", "test", subdir, name), false},
+		{"", "", "c", path("c", ".cache", "test", subdir, name), false},
+		{"", "", "", "", true},
+	}
+
+	for _, tbl := range table {
+		os.Setenv("XDG_CACHE_HOME", tbl.xdgHome)
+		os.Setenv("HOME", tbl.home)
+		os.Setenv("USERPROFILE", tbl.userProfile)
+		dir, err := app.CacheFile(subdir, name)
+		if tbl.err {
+			if err == nil {
+				t.Error("should raise error, but not raised")
+			}
+		} else {
+			if err != nil {
+				t.Error(err)
+			}
+			if dir != tbl.expected {
+				t.Errorf("expected %s, but got %s", tbl.expected, dir)
+			}
+		}
+	}
+}
+
 func TestAppRuntimeFile(t *testing.T) {
 	app := NewApp("test")
 	name := "runtime.pid"
@@ -246,25 +357,41 @@ func TestAppRuntimeFile(t *testing.T) {
 		t.Error("runtime dir should be not empty")
 	}
 
-	os.Setenv("XDG_RUNTIME_DIR", "x")
-	if dir := app.RuntimeFile(name); dir != path("x", "test", "runtime.pid") {
-		t.Errorf("expected /x/test, but got %s", dir)
+	os.Setenv("XDG_RUNTIME_DIR", "a")
+	expected := path("a", "test", "runtime.pid")
+	if dir := app.RuntimeFile(name); dir != expected {
+		t.Errorf("expected %s but got %s", expected, dir)
+	}
+}
+
+func TestAppRuntimeFileWithSubdirectory(t *testing.T) {
+	app := NewApp("test")
+	subdir := "sub"
+	name := "runtime.pid"
+	if app.RuntimeFile(name) == "" {
+		t.Error("runtime dir should be not empty")
+	}
+
+	os.Setenv("XDG_RUNTIME_DIR", "a")
+	expected := path("a", "test", subdir, name)
+	if dir := app.RuntimeFile(subdir, name); dir != expected {
+		t.Errorf("expected %s, but got %s", expected, dir)
 	}
 }
 
 func TestAppFindConfigFile(t *testing.T) {
 	app := NewApp("test")
-	os.Setenv("XDG_CONFIG_HOME", path("testdata", "x"))
-	os.Setenv("XDG_CONFIG_DIRS", join(path("testdata", "y"), path("testdata", "z")))
+	os.Setenv("XDG_CONFIG_HOME", path("testdata", "a"))
+	os.Setenv("XDG_CONFIG_DIRS", join(path("testdata", "b"), path("testdata", "c")))
 	table := []struct {
 		name    string
 		content string
 		err     bool
 	}{
-		{"aaa.txt", path("testdata", "a", "test", "aaa.txt"), true},
-		{"xxx.txt", path("testdata", "x", "test", "xxx.txt"), false},
-		{"yyy.txt", path("testdata", "y", "test", "yyy.txt"), false},
-		{"zzz.txt", path("testdata", "z", "test", "zzz.txt"), false},
+		{"zzz.txt", "testdata/z/test/zzz.txt", true},
+		{"aaa.txt", "testdata/a/test/aaa.txt", false},
+		{"bbb.txt", "testdata/b/test/bbb.txt", false},
+		{"ccc.txt", "testdata/c/test/ccc.txt", false},
 	}
 	for _, test := range table {
 		f, err := app.FindConfigFile(test.name)
@@ -290,19 +417,37 @@ func TestAppFindConfigFile(t *testing.T) {
 	}
 }
 
+func TestAppFindConfigFileWithSubdirecotry(t *testing.T) {
+	app := NewApp("test")
+	os.Setenv("XDG_CONFIG_HOME", path("testdata", "a"))
+	os.Setenv("XDG_CONFIG_DIRS", join(path("testdata", "b"), path("testdata", "c")))
+
+	f, err := app.FindConfigFile("d", "ddd.txt")
+	if err != nil {
+		t.Error(err)
+	}
+	s, err := openFile(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s != "testdata/c/test/d/ddd.txt" {
+		t.Error("find invalid file")
+	}
+}
+
 func TestAppFindDataFile(t *testing.T) {
 	app := NewApp("test")
-	os.Setenv("XDG_DATA_HOME", path("testdata", "x"))
-	os.Setenv("XDG_DATA_DIRS", join(path("testdata", "y"), path("testdata", "z")))
+	os.Setenv("XDG_DATA_HOME", path("testdata", "a"))
+	os.Setenv("XDG_DATA_DIRS", join(path("testdata", "b"), path("testdata", "c")))
 	table := []struct {
 		name    string
 		content string
 		err     bool
 	}{
-		{"aaa.txt", path("testdata", "a", "test", "aaa.txt"), true},
-		{"xxx.txt", path("testdata", "x", "test", "xxx.txt"), false},
-		{"yyy.txt", path("testdata", "y", "test", "yyy.txt"), false},
-		{"zzz.txt", path("testdata", "z", "test", "zzz.txt"), false},
+		{"zzz.txt", "testdata/z/test/zzz.txt", true},
+		{"aaa.txt", "testdata/a/test/aaa.txt", false},
+		{"bbb.txt", "testdata/b/test/bbb.txt", false},
+		{"ccc.txt", "testdata/c/test/ccc.txt", false},
 	}
 	for _, test := range table {
 		f, err := app.FindDataFile(test.name)
@@ -325,6 +470,24 @@ func TestAppFindDataFile(t *testing.T) {
 		if s != test.content {
 			t.Error("find invalid file")
 		}
+	}
+}
+
+func TestAppFindDataFileWithSubdirectory(t *testing.T) {
+	app := NewApp("test")
+	os.Setenv("XDG_DATA_HOME", path("testdata", "a"))
+	os.Setenv("XDG_DATA_DIRS", join(path("testdata", "b"), path("testdata", "c")))
+
+	f, err := app.FindDataFile("d", "ddd.txt")
+	if err != nil {
+		t.Error(err)
+	}
+	s, err := openFile(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s != "testdata/c/test/d/ddd.txt" {
+		t.Error("find invalid file")
 	}
 }
 

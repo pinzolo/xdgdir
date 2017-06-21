@@ -2,7 +2,6 @@ package xdgdir
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,21 +29,21 @@ func (a App) ConfigDir() (string, error) {
 
 // ConfigFile returns file path of app's config file that has given file name.
 //
-// 1. If XDG_CONFIG_HOME envvar is defiend, returns $XDG_CONFIG_HOME/{{AppName}}/{{name}}.
-// 2. IF HOME envvar is defiend, returns $HOME/.config/{{AppName}}/{{name}}
-// 3. IF USERPROFILE envvar is defiend, returns $USERPROFILE/.config/{{AppName}}/{{name}} (for Windows)
-func (a App) ConfigFile(name string) (string, error) {
-	return joinedPath(name, a.ConfigDir)
+// 1. If XDG_CONFIG_HOME envvar is defiend, returns $XDG_CONFIG_HOME/{{AppName}}/{{names}}.
+// 2. IF HOME envvar is defiend, returns $HOME/.config/{{AppName}}/{{names}}
+// 3. IF USERPROFILE envvar is defiend, returns $USERPROFILE/.config/{{AppName}}/{{names}} (for Windows)
+func (a App) ConfigFile(names ...string) (string, error) {
+	return joinedPath(filepath.Join(names...), a.ConfigDir)
 }
 
 // FindConfigFile finds config file that has given name.
 //
 // 1. Search in directory that is returned App#ConfigDir.
 // 2. Search in directories that are defiend at XDG_CONFIG_DIRS envvar.
-func (a App) FindConfigFile(name string) (string, error) {
+func (a App) FindConfigFile(names ...string) (string, error) {
 	d, _ := a.ConfigDir()
 	dirs := a.dirsForSearch(d, "XDG_CONFIG_DIRS")
-	f, err := findFile(dirs, name)
+	f, err := findFile(dirs, names...)
 	if err != nil {
 		return "", err
 	}
@@ -62,21 +61,21 @@ func (a App) DataDir() (string, error) {
 
 // DataFile returns file path of app's data file that has given file name.
 //
-// 1. If XDG_data_HOME envvar is defiend, returns $XDG_DATA_HOME/{{AppName}}/{{name}}.
-// 2. IF HOME envvar is defiend, returns $HOME/.local/share/{{AppName}}/{{name}}
-// 3. IF USERPROFILE envvar is defiend, returns $USERPROFILE/.local/share/{{AppName}}/{{name}} (for Windows)
-func (a App) DataFile(name string) (string, error) {
-	return joinedPath(name, a.DataDir)
+// 1. If XDG_data_HOME envvar is defiend, returns $XDG_DATA_HOME/{{AppName}}/{{names}}.
+// 2. IF HOME envvar is defiend, returns $HOME/.local/share/{{AppName}}/{{names}}
+// 3. IF USERPROFILE envvar is defiend, returns $USERPROFILE/.local/share/{{AppName}}/{{names}} (for Windows)
+func (a App) DataFile(names ...string) (string, error) {
+	return joinedPath(filepath.Join(names...), a.DataDir)
 }
 
 // FindDataFile finds data file that has given name.
 //
 // 1. Search in directory that is returned App#DataDir.
 // 2. Search in directories that are defiend at XDG_CONFIG_DIRS envvar.
-func (a App) FindDataFile(name string) (string, error) {
+func (a App) FindDataFile(names ...string) (string, error) {
 	d, _ := a.DataDir()
 	dirs := a.dirsForSearch(d, "XDG_DATA_DIRS")
-	f, err := findFile(dirs, name)
+	f, err := findFile(dirs, names...)
 	if err != nil {
 		return "", err
 	}
@@ -94,11 +93,11 @@ func (a App) CacheDir() (string, error) {
 
 // CacheFile returns file path of app's cache file that has given file name.
 //
-// 1. If XDG_cache_HOME envvar is defiend, returns $XDG_CACHE_HOME/{{AppName}}/{{name}}.
-// 2. IF HOME envvar is defiend, returns $HOME/.cache/{{AppName}}/{{name}}
-// 3. IF USERPROFILE envvar is defiend, returns $USERPROFILE/.cache/{{AppName}}/{{name}} (for Windows)
-func (a App) CacheFile(name string) (string, error) {
-	return joinedPath(name, a.CacheDir)
+// 1. If XDG_cache_HOME envvar is defiend, returns $XDG_CACHE_HOME/{{AppName}}/{{names}}.
+// 2. IF HOME envvar is defiend, returns $HOME/.cache/{{AppName}}/{{names}}
+// 3. IF USERPROFILE envvar is defiend, returns $USERPROFILE/.cache/{{AppName}}/{{names}} (for Windows)
+func (a App) CacheFile(names ...string) (string, error) {
+	return joinedPath(filepath.Join(names...), a.CacheDir)
 }
 
 // RuntimeDir returns base directory path of app's runtime.
@@ -111,10 +110,10 @@ func (a App) RuntimeDir() string {
 
 // RuntimeFile returns file path of app's runtime file that has given file name.
 //
-// 1. If XDG_RUNTIME_DIR envvar is defiend, returns $XDG_RUNTIME_DIR/{{AppName}}/{{name}}.
+// 1. If XDG_RUNTIME_DIR envvar is defiend, returns $XDG_RUNTIME_DIR/{{AppName}}/{{names}}.
 // 2. Returns temporary directory path that has subdirectory named AppName.
-func (a App) RuntimeFile(name string) string {
-	return filepath.Join(a.RuntimeDir(), name)
+func (a App) RuntimeFile(names ...string) string {
+	return filepath.Join(a.RuntimeDir(), filepath.Join(names...))
 }
 
 func joinedPath(name string, f func() (string, error)) (string, error) {
@@ -134,23 +133,17 @@ func (a App) dirsForSearch(first string, env string) []string {
 	return paths
 }
 
-func findFile(dirs []string, name string) (string, error) {
+func findFile(dirs []string, names ...string) (string, error) {
+	np := filepath.Join(names...)
 	for _, dir := range dirs {
 		if dir == "" {
 			continue
 		}
-		if _, err := os.Stat(dir); err != nil {
+		fp := filepath.Join(dir, np)
+		if _, err := os.Stat(fp); err != nil {
 			continue
 		}
-		fs, err := ioutil.ReadDir(dir)
-		if err != nil {
-			continue
-		}
-		for _, f := range fs {
-			if filepath.Base(f.Name()) == name {
-				return filepath.Join(dir, f.Name()), nil
-			}
-		}
+		return fp, nil
 	}
-	return "", fmt.Errorf("file %s is not found", name)
+	return "", fmt.Errorf("file %s is not found", np)
 }

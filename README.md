@@ -1,5 +1,5 @@
 # xdgdir
-[![Build Status](https://travis-ci.org/pinzolo/xdgdir.png)](http://travis-ci.org/pinzolo/xdgdir)
+[![Test](https://github.com/pinzolo/xdgdir/actions/workflows/test.yml/badge.svg)](https://github.com/pinzolo/xdgdir/actions/workflows/test.yml)
 [![Coverage Status](https://coveralls.io/repos/github/pinzolo/xdgdir/badge.svg?branch=master)](https://coveralls.io/github/pinzolo/xdgdir?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/pinzolo/xdgdir)](https://goreportcard.com/report/github.com/pinzolo/xdgdir)
 [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/pinzolo/xdgdir)
